@@ -1,5 +1,4 @@
 from django.db.models.query import QuerySet
-from model_utils.managers import PassThroughManager
 from .io import read_frame
 import django
 
@@ -180,12 +179,14 @@ class DataFrameQuerySet(QuerySet):
         return read_frame(self, fieldnames=fieldnames, verbose=verbose,
                           index_col=index, coerce_float=coerce_float)
 
-
-class DataFrameManager(PassThroughManager):
-    if django.VERSION < (1, 7):
+if django.VERSION < (1, 7):
+    class DataFrameManager(PassThroughManager):
         def get_query_set(self):
             return DataFrameQuerySet(self.model)
 
-    else:
-        def get_queryset(self):
-            return DataFrameQuerySet(self.model)
+else:
+    class BaseManager(models.Manager):
+    def manager_only_method(self):
+        return
+
+    DataFrameManager = BaseManager.from_queryset(DataFrameQuerySet)
