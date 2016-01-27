@@ -64,22 +64,23 @@ def read_frame(qs, fieldnames=(), index_col=None, coerce_float=False,
             fieldnames = tuple(fieldnames) + (index_col,)
 
         fields = to_fields(qs, fieldnames)
-    elif isinstance(qs, django.db.models.query.ValuesQuerySet):
+    elif isinstance(qs, django.db.models.query.QuerySet):
         if django.VERSION < (1, 8):
             annotation_field_names = qs.aggregate_names
         else:
-            annotation_field_names = qs.annotation_names
+            annotation_field_names = list(qs.values().query.annotation_select)
 
-        fieldnames = qs.field_names + annotation_field_names + qs.extra_names
+        fieldnames = list(qs.values().query.values_select) + annotation_field_names + list(qs.values().query.extra_select)
 
-        fields = [qs.model._meta.get_field(f) for f in qs.field_names] + \
-                 [None] * (len(annotation_field_names) + len(qs.extra_names))
+        fields = [qs.model._meta.get_field(f) for f in list(qs.values().query.values_select)] + \
+                 [None] * (len(annotation_field_names) + len(list(qs.values().query.extra_select)))
     else:
-        fields = qs.model._meta.fields
+	fields = qs.model._meta.fields
         fieldnames = [f.name for f in fields]
 
-    if isinstance(qs, django.db.models.query.ValuesQuerySet):
-        recs = list(qs)
+    if isinstance(qs, django.db.models.query.QuerySet):
+        vqs = qs.values()
+        recs = list(vqs)
     else:
         recs = list(qs.values_list(*fieldnames))
 
