@@ -1,4 +1,5 @@
 from django.db.models.query import QuerySet
+from django.db import models
 from .io import read_frame
 import django
 
@@ -186,7 +187,7 @@ if django.VERSION < (1, 7):
 
 else:
     class BaseManager(models.Manager):
-    def manager_only_method(self):
-        return
+        def manager_only_method(self):
+            return
 
     DataFrameManager = BaseManager.from_queryset(DataFrameQuerySet)
